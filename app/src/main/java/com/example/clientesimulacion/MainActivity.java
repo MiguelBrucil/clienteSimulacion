@@ -10,117 +10,139 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
-
-    private EditText etNumeroCorredores, etDistancia;
-    private Button btnIniciarCarrera, btnVerProgreso, btnReiniciar;
-    private TextView tvResultados;
-
-    private ApiService apiService;
+    Button btnIniciar, btnProgreso, btnReiniciar;
+    EditText etNumeroCorredores, etDistancia;
+    TextView txtResultados;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Referencias a los componentes de la interfaz
+        // Referencias a los elementos de la interfaz
+        btnIniciar = findViewById(R.id.btnIniciarCarrera);
+        btnProgreso = findViewById(R.id.btnVerProgreso);
+        btnReiniciar = findViewById(R.id.btnReiniciar);
+
         etNumeroCorredores = findViewById(R.id.etNumeroCorredores);
         etDistancia = findViewById(R.id.etDistancia);
-        btnIniciarCarrera = findViewById(R.id.btnIniciarCarrera);
-        btnVerProgreso = findViewById(R.id.btnVerProgreso);
-        btnReiniciar = findViewById(R.id.btnReiniciar);
-        tvResultados = findViewById(R.id.tvResultados);
+        txtResultados = findViewById(R.id.tvResultados);
 
-        // Configuración de Retrofit
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:3000/") // URL del servidor
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        apiService = retrofit.create(ApiService.class);
-
-        // Acciones de los botones
-        btnIniciarCarrera.setOnClickListener(this::iniciarCarrera);
-        btnVerProgreso.setOnClickListener(this::verProgreso);
-        btnReiniciar.setOnClickListener(this::reiniciarCarrera);
-    }
-
-    private void iniciarCarrera(View view) {
-        int numeroCorredores = Integer.parseInt(etNumeroCorredores.getText().toString());
-        int distancia = Integer.parseInt(etDistancia.getText().toString());
-
-        Call<CarreraResponse> call = apiService.iniciarCarrera(new CarreraRequest(numeroCorredores, distancia));
-        call.enqueue(new Callback<CarreraResponse>() {
+        // Acción para iniciar la carrera
+        btnIniciar.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onResponse(Call<CarreraResponse> call, Response<CarreraResponse> response) {
-                if (response.isSuccessful()) {
-                    CarreraResponse carreraResponse = response.body();
-                    tvResultados.setText("Carrera iniciada con " + carreraResponse.getCorredores().size() + " corredores.");
+            public void onClick(View v) {
+                String numeroCorredores = etNumeroCorredores.getText().toString().trim();
+                String distancia = etDistancia.getText().toString().trim();
+
+                if (numeroCorredores.isEmpty() || distancia.isEmpty()) {
+                    Toast.makeText(MainActivity.this, "Por favor, ingrese ambos valores (corredores y distancia)", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(MainActivity.this, "Error al iniciar la carrera", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<CarreraResponse> call, Throwable t) {
-                Log.e("API Error", t.getMessage());
-                Toast.makeText(MainActivity.this, "Error de conexión", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void verProgreso(View view) {
-        Call<CarreraResponse> call = apiService.verProgreso();
-        call.enqueue(new Callback<CarreraResponse>() {
-            @Override
-            public void onResponse(Call<CarreraResponse> call, Response<CarreraResponse> response) {
-                if (response.isSuccessful()) {
-                    CarreraResponse carreraResponse = response.body();
-                    StringBuilder progreso = new StringBuilder();
-                    for (Corredor corredor : carreraResponse.getCorredores()) {
-                        progreso.append("Corredor ")
-                                .append(corredor.getId())
-                                .append(": ")
-                                .append(corredor.getPosicion())
-                                .append(" km\n");
+                    String url = "http://192.168.10.109:3000/carrera"; // Asegúrate de que la IP sea correcta
+                    JSONObject jsonObject = new JSONObject();
+                    try {
+                        jsonObject.put("numeroCorredores", numeroCorredores);
+                        jsonObject.put("distancia", distancia);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                    tvResultados.setText(progreso.toString());
-                } else {
-                    Toast.makeText(MainActivity.this, "No hay carrera en progreso", Toast.LENGTH_SHORT).show();
+
+                    realizarSolicitudPOST(url, jsonObject);
                 }
             }
+        });
 
+        // Acción para ver el progreso de la carrera
+        btnProgreso.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onFailure(Call<CarreraResponse> call, Throwable t) {
-                Log.e("API Error", t.getMessage());
-                Toast.makeText(MainActivity.this, "Error de conexión", Toast.LENGTH_SHORT).show();
+            public void onClick(View v) {
+                String url = "http://192.168.10.109:3000/carrera/avance?horas=1&distancia=100"; // Por ejemplo, se pasa 1 hora y 100 km
+                realizarSolicitudGET(url);
+            }
+        });
+
+        // Acción para reiniciar la carrera
+        btnReiniciar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String url = "http://192.168.10.109:3000/carrera"; // Asegúrate de que la IP sea correcta
+                realizarSolicitudDELETE(url);
             }
         });
     }
 
-    private void reiniciarCarrera(View view) {
-        Call<Void> call = apiService.reiniciarCarrera();
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    tvResultados.setText("Carrera reiniciada");
-                } else {
-                    Toast.makeText(MainActivity.this, "Error al reiniciar la carrera", Toast.LENGTH_SHORT).show();
-                }
-            }
+    private void realizarSolicitudPOST(String URL, JSONObject jsonObject) {
+        Log.d("URL", URL);  // Imprimir URL en los logs
+        Log.d("Request Body", jsonObject.toString());  // Imprimir cuerpo de la solicitud
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e("API Error", t.getMessage());
-                Toast.makeText(MainActivity.this, "Error de conexión", Toast.LENGTH_SHORT).show();
-            }
-        });
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL, jsonObject,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // Si la respuesta es un JSON, puedes modificar esto según el formato de respuesta de tu servidor
+                            String mensaje = response.getString("mensaje");
+                            txtResultados.setText("Carrera iniciada: " + mensaje);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(), "Error: " + error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        Volley.newRequestQueue(this).add(jsonObjectRequest);
+    }
+
+    private void realizarSolicitudGET(String URL) {
+        Log.d("URL", URL);  // Imprimir URL en los logs
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        txtResultados.setText("Progreso de la carrera: " + response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(), "Error: " + error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        Volley.newRequestQueue(this).add(stringRequest);
+    }
+
+    private void realizarSolicitudDELETE(String URL) {
+        Log.d("URL", URL);  // Imprimir URL en los logs
+
+        StringRequest stringRequest = new StringRequest(Request.Method.DELETE, URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        txtResultados.setText("Carrera reiniciada.");
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(), "Error: " + error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        Volley.newRequestQueue(this).add(stringRequest);
     }
 }

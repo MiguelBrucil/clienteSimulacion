@@ -24,27 +24,27 @@
     <!-- Campo para número de corredores -->
     <EditText
         android:id="@+id/etNumeroCorredores"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="267dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="16dp"
         android:hint="Número de corredores"
         android:inputType="number"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvTitulo"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitulo"
         app:layout_constraintWidth_percent="0.8" />
 
     <!-- Campo para distancia -->
     <EditText
         android:id="@+id/etDistancia"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="271dp"
+        android:layout_height="47dp"
+        android:layout_marginTop="8dp"
         android:hint="Distancia (km)"
         android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/etNumeroCorredores"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etNumeroCorredores"
         app:layout_constraintWidth_percent="0.8" />
 
     <!-- Botón para iniciar carrera -->
@@ -74,11 +74,12 @@
     <!-- Botón para reiniciar carrera -->
 
     <!-- Área para mostrar resultados -->
+
     <Button
         android:id="@+id/btnReiniciar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="364dp"
+        android:layout_marginTop="20dp"
         android:text="Reiniciar Carrera"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.481"
@@ -92,14 +93,16 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
+        android:background="#EFEFEF"
+        android:gravity="center_vertical"
+        android:padding="16dp"
         android:text="Resultados aquí"
         android:textSize="16sp"
-        android:background="#EFEFEF"
-        android:padding="16dp"
-        android:gravity="center_vertical"
-        app:layout_constraintTop_toBottomOf="@id/btnReiniciar"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/btnReiniciar"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
